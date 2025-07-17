@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: tiktak-server
+    env: docker
+    plan: free
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
