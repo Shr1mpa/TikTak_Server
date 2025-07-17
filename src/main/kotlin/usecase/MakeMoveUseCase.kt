@@ -8,6 +8,8 @@ import com.example.model.response.MoveResult
 import com.example.repository.GameHistoryRepository
 import com.example.utils.GameRulesValidator
 import com.example.utils.WinnerChecker.Companion.checkWinner
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 class MakeMoveUseCase(
     private val sessionManager: GameSessionManager,
@@ -27,7 +29,7 @@ class MakeMoveUseCase(
         val winnerResult = checkWinner(updatedBoard)
         val winnerName = when (winnerResult) {
             WinnerResult.X, WinnerResult.O -> state.players[winnerResult.name]
-            WinnerResult.DRAW, WinnerResult.NONE -> ""
+            WinnerResult.DRAW, WinnerResult.NONE -> null
         }
 
         session.state = state.copy(
@@ -37,13 +39,14 @@ class MakeMoveUseCase(
         )
 
         if (winnerResult != WinnerResult.NONE) {
-            historyRepository.save(
-                GameResult(
-                    players = state.players,
-                    winner = winnerName ?: "",
-                    finalBoard = updatedBoard
-                )
+            val result = GameResult(
+                sessionId = sessionId,
+                players = state.players,
+                board = updatedBoard,
+                winner = winnerName,
+                endedAt = ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
             )
+            historyRepository.save(result)
         }
 
         val message = when (winnerResult) {

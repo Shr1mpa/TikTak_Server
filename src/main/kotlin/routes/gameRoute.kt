@@ -7,24 +7,13 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
 fun Route.gameRoutes(gameController: GameController) {
-    route("/session/{sessionId}") {
-        post("/join") {
-            gameController.join(call)
-        }
-        post("/move") {
-            gameController.makeMove(call)
-        }
-        get("/state") {
-            gameController.getState(call)
-        }
-        get("/current-turn") {
-            gameController.getCurrentTurn(call)
-        }
+    route("/game/{sessionId}") {
+        post("/move") { gameController.makeMove(call) }
+        get("/state") { gameController.getGameState(call) }
+        get("/current-turn") { gameController.getCurrentTurn(call) }
     }
 
     route("/game") {
-        get("/history") {
-            gameController.getAll(call)
-        }
+        get("/history") { gameController.getHistory(call) }
     }
 }

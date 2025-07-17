@@ -1,7 +1,7 @@
 package com.example.di
 
 import com.example.controller.GameController
-import com.example.controller.SessionController
+import com.example.controller.LobbyController
 import com.example.manager.GameSessionManager
 import com.example.repository.GameHistoryRepository
 import com.example.repository.impl.FileGameHistoryRepository
@@ -22,7 +22,6 @@ val appModule = module {
     factory { GetGameHistoryUseCase(get()) }
     factory { MakeMoveUseCase(get(), get()) }
     factory { JoinGameUseCase(get()) }
-
-    factory { SessionController(get()) }
-    factory { GameController(get(), get(), get(), get(), get()) } // 5 use-case'ів
+    factory { LobbyController(get(), get()) }
+    factory { GameController(get(), get(), get(), get()) }
 }
