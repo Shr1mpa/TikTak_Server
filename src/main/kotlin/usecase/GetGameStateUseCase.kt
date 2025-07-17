@@ -13,21 +13,24 @@ class GetGameStateUseCase(
             ?: throw IllegalArgumentException("Сесію не знайдено")
 
         val state = session.state
+        val winnerResult = state.winnerResult
+
         val message = when {
-            state.winnerResult == WinnerResult.DRAW -> "Гра завершена в нічию"
-            state.winnerResult != WinnerResult.NONE -> "Гру виграв ${state.players[state.winnerResult.name]}"
+            winnerResult == WinnerResult.DRAW -> "Гра завершена в нічию"
+            winnerResult != WinnerResult.NONE -> "Гру виграв ${state.players[winnerResult.name]}"
             else -> "Очікується хід гравця ${state.currentTurn}"
         }
 
         return GameStatusResponse(
             board = state.board,
-            currentTurn = state.currentTurn,
+            currentTurn = if (winnerResult == WinnerResult.NONE) state.currentTurn else null,
             players = state.players,
-            winner = when (state.winnerResult) {
-                WinnerResult.X, WinnerResult.O -> state.players[state.winnerResult.name]
+            winner = when (winnerResult) {
+                WinnerResult.X, WinnerResult.O -> state.players[winnerResult.name]
                 else -> null
             },
-            message = message
+            message = message,
+            isGameOver = winnerResult != WinnerResult.NONE
         )
     }
 }

@@ -58,9 +58,10 @@ class MakeMoveUseCase(
         return Result.success(
             MoveResult(
                 board = updatedBoard,
-                currentTurn = session.state.currentTurn,
+                currentTurn = if (winnerResult == WinnerResult.NONE) session.state.currentTurn else null,
                 winner = winnerName,
-                message = message
+                message = message,
+                isGameOver = winnerResult != WinnerResult.NONE
             )
         )
     }

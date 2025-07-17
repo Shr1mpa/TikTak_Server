@@ -1,36 +1,54 @@
 package com.example.controller
 
+import com.example.exceptions.ErrorResponse
+import com.example.exceptions.ValidationException
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
+import com.example.exceptions.NotFoundException
+import io.ktor.server.request.ContentTransformationException
+import io.ktor.server.request.receive
 import io.ktor.server.response.respond
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 abstract class BaseGameController {
-    protected suspend fun requireSessionId(call: ApplicationCall): String? {
-        return call.parameters["sessionId"] ?: run {
-            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Session ID is required"))
-            null
-        }
+    protected suspend inline fun <reified T : Any> ApplicationCall.receiveValidated(
+        validation: T.() -> Unit
+    ): T {
+        val request = receive<T>()
+        request.validation()
+        return request
     }
 
-    protected suspend inline fun <T> handleResult(
-        call: ApplicationCall,
-        crossinline block: suspend () -> Result<T>
-    ) {
-        val result = withContext(Dispatchers.IO) { block() }
+    protected suspend fun ApplicationCall.requireSessionId(): String {
+        return parameters["sessionId"] ?: throw ValidationException("Потрібен ID сесії")
+    }
 
-        result.fold(
-            onSuccess = { call.respond(HttpStatusCode.OK, it as Any) },
-            onFailure = {
-                when (it) {
-                    is IllegalArgumentException -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to (it.message ?: "Invalid input")))
-                    else -> {
-                        it.printStackTrace()
-                        call.respond(HttpStatusCode.InternalServerError)
-                    }
-                }
-            }
-        )
+    protected suspend inline fun <T> withErrorHandling(
+        call: ApplicationCall,
+        crossinline block: suspend () -> T
+    ) {
+        try {
+            block()
+        } catch (e: ContentTransformationException) {
+            call.respond(
+                HttpStatusCode.BadRequest,
+                ErrorResponse("Невірний формат запиту. Очікується JSON з полем 'name'")
+            )
+        } catch (e: ValidationException) {
+            call.respond(
+                HttpStatusCode.BadRequest,
+                ErrorResponse(e.message ?: "Невірні вхідні дані")
+            )
+        } catch (e: NotFoundException) {
+            call.respond(
+                HttpStatusCode.NotFound,
+                ErrorResponse(e.message ?: "Ресурс не знайдено")
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                ErrorResponse("Внутрішня помилка сервера")
+            )
+        }
     }
 }

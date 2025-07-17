@@ -1,18 +1,13 @@
 package com.example.controller
 
 import com.example.model.request.MoveRequest
-import com.example.model.request.PlayerJoinRequest
 import com.example.usecase.GetCurrentTurnUseCase
 import com.example.usecase.GetGameHistoryUseCase
 import com.example.usecase.GetGameStateUseCase
-import com.example.usecase.JoinGameUseCase
 import com.example.usecase.MakeMoveUseCase
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
-import io.ktor.server.request.receive
+import com.example.exceptions.ValidationException
 import io.ktor.server.response.respond
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class GameController(
     private val makeMoveUseCase: MakeMoveUseCase,
@@ -21,25 +16,43 @@ class GameController(
     private val getGameHistoryUseCase: GetGameHistoryUseCase
 ) : BaseGameController() {
 
-    suspend fun makeMove(call: ApplicationCall) {
-        val sessionId = requireSessionId(call) ?: return
-        val request = call.receive<MoveRequest>()
-        handleResult(call) { makeMoveUseCase(sessionId, request) }
+    suspend fun makeMove(call: ApplicationCall) = withErrorHandling(call) {
+        val sessionId = call.requireSessionId()
+        val request = call.receiveValidated<MoveRequest> {
+            if (player != "X" && player != "O") {
+                throw ValidationException("Гравець повинен бути або 'X', або 'O'")
+            }
+
+            val validCells = setOf(
+                "A1", "A2", "A3",
+                "B1", "B2", "B3",
+                "C1", "C2", "C3"
+            )
+
+            if (cell !in validCells) {
+                throw ValidationException("Невірна клітинка: $cell. Допустимі значення: ${validCells.joinToString()}")
+            }
+        }
+
+        makeMoveUseCase(sessionId, request).fold(
+            onSuccess = { call.respond(it) },
+            onFailure = { throw it }
+        )
     }
 
-    suspend fun getGameState(call: ApplicationCall) {
-        val sessionId = requireSessionId(call) ?: return
+    suspend fun getGameState(call: ApplicationCall) = withErrorHandling(call) {
+        val sessionId = call.requireSessionId()
         val state = getGameStateUseCase(sessionId)
-        call.respond(HttpStatusCode.OK, state)
+        call.respond(state)
     }
 
-    suspend fun getCurrentTurn(call: ApplicationCall) {
-        val sessionId = requireSessionId(call) ?: return
+    suspend fun getCurrentTurn(call: ApplicationCall) = withErrorHandling(call) {
+        val sessionId = call.requireSessionId()
         val turn = getCurrentTurnUseCase(sessionId)
         call.respond(turn)
     }
 
-    suspend fun getHistory(call: ApplicationCall) {
+    suspend fun getHistory(call: ApplicationCall) = withErrorHandling(call) {
         val history = getGameHistoryUseCase()
         call.respond(history)
     }
