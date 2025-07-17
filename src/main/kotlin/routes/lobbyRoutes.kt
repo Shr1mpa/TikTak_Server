@@ -13,5 +13,6 @@ fun Route.lobbyRoutes(lobbyController: LobbyController) {
         get("/available") { lobbyController.listAvailableLobbies(call) }
         get("/{sessionId}/players") { lobbyController.getLobbyPlayers(call) }
         post("/{sessionId}/join") { lobbyController.joinLobby(call) }
+        post("/{sessionId}/leave") { lobbyController.leaveLobby(call) }
     }
 }

@@ -9,5 +9,3 @@ data class JoinResponse(
     val message: String
 )
 
-@Serializable
-data class ErrorResponse(val error: String)

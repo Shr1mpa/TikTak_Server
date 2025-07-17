@@ -8,12 +8,12 @@ import java.util.UUID
 class GameSessionManager {
     private val sessions = mutableMapOf<String, GameSession>()
 
-    fun createSession(initialPlayerName: String): GameSession {
+    fun createSession(initialPlayerName: String, symbol: String): GameSession {
         val id = UUID.randomUUID().toString()
         val initialState = GameState(
             board = initEmptyBoard(),
             currentTurn = "X",
-            players = mapOf("X" to initialPlayerName)
+            players = mapOf(symbol to initialPlayerName)
         )
         val session = GameSession(id, initialState)
         sessions[id] = session
@@ -23,7 +23,11 @@ class GameSessionManager {
     fun getSession(id: String): GameSession? = sessions[id]
 
     fun resetSession(id: String) {
-        sessions[id]?.state = GameState(board = initEmptyBoard(), currentTurn = "X", players = emptyMap())
+        sessions[id]?.state = GameState(
+            board = initEmptyBoard(),
+            currentTurn = "X",
+            players = emptyMap()
+        )
     }
 
     fun addPlayerToSession(id: String, name: String): Result<String> {
@@ -31,22 +35,35 @@ class GameSessionManager {
         val players = session.state.players.toMutableMap()
 
         if (players.containsValue(name)) {
-            return Result.success(players.entries.first { it.value == name }.key) // Return existing symbol
+            return Result.success(players.entries.first { it.value == name }.key)
         }
 
-        val symbol = when {
+        val availableSymbol = when {
             !players.containsKey("X") -> "X"
             !players.containsKey("O") -> "O"
             else -> return Result.failure(Exception("Session full"))
         }
 
-        players[symbol] = name
+        players[availableSymbol] = name
         session.state = session.state.copy(players = players)
-        return Result.success(symbol)
+        return Result.success(availableSymbol)
     }
 
-    fun getAllSessions(): List<GameSession> = sessions.values.toList()
     fun getJoinableSessions(): List<GameSession> {
         return sessions.values.filter { it.state.players.size < 2 }
+    }
+
+    fun removePlayerFromSession(sessionId: String, playerName: String): Result<Unit> {
+        val session = sessions[sessionId] ?: return Result.failure(Exception("Сесію не знайдено"))
+
+        val updatedPlayers = session.state.players.filterValues { it != playerName }
+
+        if (updatedPlayers.isEmpty()) {
+            sessions.remove(sessionId)
+        } else {
+            session.state = session.state.copy(players = updatedPlayers)
+        }
+
+        return Result.success(Unit)
     }
 }
