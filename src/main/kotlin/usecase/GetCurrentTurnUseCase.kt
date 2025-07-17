@@ -1,12 +1,15 @@
 package com.example.usecase
 
-import com.example.model.GameStateHolder
+import com.example.manager.GameSessionManager
 import com.example.model.response.CurrentTurnDto
 
 class GetCurrentTurnUseCase(
-    private val gameStateHolder: GameStateHolder
+    private val sessionManager: GameSessionManager
 ) {
-    operator fun invoke(): CurrentTurnDto {
-        return CurrentTurnDto(currentTurn = gameStateHolder.state.currentTurn)
+    operator fun invoke(sessionId: String): CurrentTurnDto {
+        val session = sessionManager.getSession(sessionId)
+            ?: throw IllegalArgumentException("Сесію не знайдено")
+
+        return CurrentTurnDto(currentTurn = session.state.currentTurn)
     }
 }

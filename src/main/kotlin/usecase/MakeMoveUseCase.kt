@@ -1,6 +1,6 @@
 package com.example.usecase
 
-import com.example.model.GameStateHolder
+import com.example.manager.GameSessionManager
 import com.example.model.WinnerResult
 import com.example.model.request.MoveRequest
 import com.example.model.response.GameResult
@@ -10,11 +10,14 @@ import com.example.utils.GameRulesValidator
 import com.example.utils.WinnerChecker.Companion.checkWinner
 
 class MakeMoveUseCase(
-    private val gameStateHolder: GameStateHolder,
+    private val sessionManager: GameSessionManager,
     private val historyRepository: GameHistoryRepository
 ) {
-    operator fun invoke(request: MoveRequest): Result<MoveResult> {
-        val state = gameStateHolder.state
+    operator fun invoke(sessionId: String, request: MoveRequest): Result<MoveResult> {
+        val session = sessionManager.getSession(sessionId)
+            ?: return Result.failure(IllegalStateException("Сесію не знайдено"))
+
+        val state = session.state
 
         GameRulesValidator.validateMove(state, request)
 
@@ -27,7 +30,7 @@ class MakeMoveUseCase(
             WinnerResult.DRAW, WinnerResult.NONE -> ""
         }
 
-        gameStateHolder.state = state.copy(
+        session.state = state.copy(
             board = updatedBoard,
             currentTurn = if (winnerResult == WinnerResult.NONE) togglePlayer(request.player) else state.currentTurn,
             winnerResult = winnerResult
@@ -52,7 +55,7 @@ class MakeMoveUseCase(
         return Result.success(
             MoveResult(
                 board = updatedBoard,
-                currentTurn = gameStateHolder.state.currentTurn,
+                currentTurn = session.state.currentTurn,
                 winner = winnerName,
                 message = message
             )
