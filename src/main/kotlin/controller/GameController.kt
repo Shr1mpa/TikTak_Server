@@ -16,62 +16,31 @@ import kotlinx.coroutines.withContext
 
 class GameController(
     private val makeMoveUseCase: MakeMoveUseCase,
-    private val getGameHistoryUseCase: GetGameHistoryUseCase,
-    private val getCurrentTurnUseCase: GetCurrentTurnUseCase,
     private val getGameStateUseCase: GetGameStateUseCase,
-    private val joinGameUseCase: JoinGameUseCase
-) {
+    private val getCurrentTurnUseCase: GetCurrentTurnUseCase,
+    private val getGameHistoryUseCase: GetGameHistoryUseCase
+) : BaseGameController() {
+
     suspend fun makeMove(call: ApplicationCall) {
-        val sessionId = call.parameters["sessionId"]
-            ?: return call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Session ID is missing"))
-
+        val sessionId = requireSessionId(call) ?: return
         val request = call.receive<MoveRequest>()
-
-        val result = withContext(Dispatchers.Default) {
-            makeMoveUseCase(sessionId, request)
-        }
-
-        result
-            .onSuccess { moveResult -> call.respond(HttpStatusCode.OK, moveResult) }
-            .onFailure { error -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to error.message)) }
+        handleResult(call) { makeMoveUseCase(sessionId, request) }
     }
 
-    suspend fun join(call: ApplicationCall) {
-        val sessionId = call.parameters["sessionId"]
-            ?: return call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Session ID is missing"))
-
-        val request = call.receive<PlayerJoinRequest>()
-        val result = withContext(Dispatchers.Default) {
-            joinGameUseCase(sessionId, request)
-        }
-
-        result.onSuccess {
-            call.respond(it)
-        }.onFailure {
-            call.respond(HttpStatusCode.BadRequest, mapOf("error" to it.message))
-        }
-    }
-
-    suspend fun getAll(call: ApplicationCall) {
-        val history = getGameHistoryUseCase()
-        call.respond(history)
+    suspend fun getGameState(call: ApplicationCall) {
+        val sessionId = requireSessionId(call) ?: return
+        val state = getGameStateUseCase(sessionId)
+        call.respond(HttpStatusCode.OK, state)
     }
 
     suspend fun getCurrentTurn(call: ApplicationCall) {
-        val sessionId = call.parameters["sessionId"]
-            ?: return call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Session ID is missing"))
-
-        val result = getCurrentTurnUseCase(sessionId)
-        call.respond(result)
+        val sessionId = requireSessionId(call) ?: return
+        val turn = getCurrentTurnUseCase(sessionId)
+        call.respond(turn)
     }
 
-    suspend fun getState(call: ApplicationCall) {
-        val sessionId = call.parameters["sessionId"]
-            ?: return call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Session ID is missing"))
-
-        val result = getGameStateUseCase(sessionId)
-        call.respond(HttpStatusCode.OK, result)
+    suspend fun getHistory(call: ApplicationCall) {
+        val history = getGameHistoryUseCase()
+        call.respond(history)
     }
-
-
 }
