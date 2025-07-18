@@ -16,8 +16,9 @@ class GameController(
     private val getGameHistoryUseCase: GetGameHistoryUseCase
 ) : BaseGameController() {
 
-    suspend fun makeMove(call: ApplicationCall) = withErrorHandling(call) {
+    suspend fun makeMove(call: ApplicationCall) {
         val sessionId = call.requireSessionId()
+
         val request = call.receiveValidated<MoveRequest> {
             if (player != "X" && player != "O") {
                 throw ValidationException("Гравець повинен бути або 'X', або 'O'")
@@ -34,25 +35,23 @@ class GameController(
             }
         }
 
-        makeMoveUseCase(sessionId, request).fold(
-            onSuccess = { call.respond(it) },
-            onFailure = { throw it }
-        )
+        val result = makeMoveUseCase(sessionId, request)
+        call.respond(result.getOrThrow())
     }
 
-    suspend fun getGameState(call: ApplicationCall) = withErrorHandling(call) {
+    suspend fun getGameState(call: ApplicationCall) {
         val sessionId = call.requireSessionId()
         val state = getGameStateUseCase(sessionId)
         call.respond(state)
     }
 
-    suspend fun getCurrentTurn(call: ApplicationCall) = withErrorHandling(call) {
+    suspend fun getCurrentTurn(call: ApplicationCall) {
         val sessionId = call.requireSessionId()
         val turn = getCurrentTurnUseCase(sessionId)
         call.respond(turn)
     }
 
-    suspend fun getHistory(call: ApplicationCall) = withErrorHandling(call) {
+    suspend fun getHistory(call: ApplicationCall) {
         val history = getGameHistoryUseCase()
         call.respond(history)
     }

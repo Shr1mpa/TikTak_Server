@@ -20,7 +20,7 @@ class LobbyController(
     private val joinGameUseCase: JoinGameUseCase
 ) : BaseGameController() {
 
-    suspend fun createLobby(call: ApplicationCall) = withErrorHandling(call) {
+    suspend fun createLobby(call: ApplicationCall) {
         val request = call.receiveValidated<PlayerJoinRequest> {
             if (name.isBlank()) throw ValidationException("Імʼя не може бути порожнім")
         }
@@ -37,7 +37,7 @@ class LobbyController(
         )
     }
 
-    suspend fun listAvailableLobbies(call: ApplicationCall) = withErrorHandling(call) {
+    suspend fun listAvailableLobbies(call: ApplicationCall) {
         val availableSessions = sessionManager.getJoinableSessions()
         val response = availableSessions.map {
             SessionLobbyDto(
@@ -48,27 +48,25 @@ class LobbyController(
         call.respond(response)
     }
 
-    suspend fun getLobbyPlayers(call: ApplicationCall) = withErrorHandling(call) {
+    suspend fun getLobbyPlayers(call: ApplicationCall) {
         val sessionId = call.requireSessionId()
         val session = sessionManager.getSession(sessionId)
-            ?: throw NotFoundException("Сесія не знайдена")
+            ?: throw NotFoundException("Сесію не знайдено")
 
         call.respond(session.state.players)
     }
 
-    suspend fun joinLobby(call: ApplicationCall) = withErrorHandling(call) {
+    suspend fun joinLobby(call: ApplicationCall) {
         val sessionId = call.requireSessionId()
         val request = call.receiveValidated<PlayerJoinRequest> {
             if (name.isBlank()) throw ValidationException("Імʼя не може бути порожнім")
         }
 
-        joinGameUseCase(sessionId, request).fold(
-            onSuccess = { call.respond(it) },
-            onFailure = { throw it }
-        )
+        val result = joinGameUseCase(sessionId, request)
+        call.respond(result.getOrThrow())
     }
 
-    suspend fun leaveLobby(call: ApplicationCall) = withErrorHandling(call) {
+    suspend fun leaveLobby(call: ApplicationCall) {
         val sessionId = call.requireSessionId()
         val request = call.receive<PlayerLeaveRequest>()
 

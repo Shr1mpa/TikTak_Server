@@ -8,6 +8,7 @@ import com.example.model.response.MoveResult
 import com.example.repository.GameHistoryRepository
 import com.example.utils.GameRulesValidator
 import com.example.utils.WinnerChecker.Companion.checkWinner
+import kotlinx.coroutines.sync.withLock
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
@@ -15,55 +16,57 @@ class MakeMoveUseCase(
     private val sessionManager: GameSessionManager,
     private val historyRepository: GameHistoryRepository
 ) {
-    operator fun invoke(sessionId: String, request: MoveRequest): Result<MoveResult> {
+    suspend operator fun invoke(sessionId: String, request: MoveRequest): Result<MoveResult> {
         val session = sessionManager.getSession(sessionId)
             ?: return Result.failure(IllegalStateException("Сесію не знайдено"))
 
-        val state = session.state
+        return session.mutex.withLock {
+            val state = session.state
 
-        GameRulesValidator.validateMove(state, request)
+            GameRulesValidator.validateMove(state, request)
 
-        val updatedBoard = state.board.toMutableMap()
-        updatedBoard[request.cell] = request.player
+            val updatedBoard = state.board.toMutableMap()
+            updatedBoard[request.cell] = request.player
 
-        val winnerResult = checkWinner(updatedBoard)
-        val winnerName = when (winnerResult) {
-            WinnerResult.X, WinnerResult.O -> state.players[winnerResult.name]
-            WinnerResult.DRAW, WinnerResult.NONE -> null
-        }
+            val winnerResult = checkWinner(updatedBoard)
+            val winnerName = when (winnerResult) {
+                WinnerResult.X, WinnerResult.O -> state.players[winnerResult.name]
+                WinnerResult.DRAW, WinnerResult.NONE -> null
+            }
 
-        session.state = state.copy(
-            board = updatedBoard,
-            currentTurn = if (winnerResult == WinnerResult.NONE) togglePlayer(request.player) else state.currentTurn,
-            winnerResult = winnerResult
-        )
-
-        if (winnerResult != WinnerResult.NONE) {
-            val result = GameResult(
-                sessionId = sessionId,
-                players = state.players,
+            session.state = state.copy(
                 board = updatedBoard,
-                winner = winnerName,
-                endedAt = ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                currentTurn = if (winnerResult == WinnerResult.NONE) togglePlayer(request.player) else state.currentTurn,
+                winnerResult = winnerResult
             )
-            historyRepository.save(result)
-        }
 
-        val message = when (winnerResult) {
-            WinnerResult.X, WinnerResult.O -> "Гру виграв $winnerName"
-            WinnerResult.DRAW -> "Гра завершена в нічию"
-            WinnerResult.NONE -> "Хід прийнято"
-        }
+            if (winnerResult != WinnerResult.NONE) {
+                val result = GameResult(
+                    sessionId = sessionId,
+                    players = state.players,
+                    board = updatedBoard,
+                    winner = winnerName,
+                    endedAt = ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                )
+                historyRepository.save(result)
+            }
 
-        return Result.success(
-            MoveResult(
-                board = updatedBoard,
-                currentTurn = if (winnerResult == WinnerResult.NONE) session.state.currentTurn else null,
-                winner = winnerName,
-                message = message,
-                isGameOver = winnerResult != WinnerResult.NONE
+            val message = when (winnerResult) {
+                WinnerResult.X, WinnerResult.O -> "Гру виграв $winnerName"
+                WinnerResult.DRAW -> "Гра завершена в нічию"
+                WinnerResult.NONE -> "Хід прийнято"
+            }
+
+            Result.success(
+                MoveResult(
+                    board = updatedBoard,
+                    currentTurn = if (winnerResult == WinnerResult.NONE) session.state.currentTurn else null,
+                    winner = winnerName,
+                    message = message,
+                    isGameOver = winnerResult != WinnerResult.NONE
+                )
             )
-        )
+        }
     }
 
     private fun togglePlayer(current: String): String = if (current == "X") "O" else "X"

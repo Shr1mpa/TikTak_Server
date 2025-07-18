@@ -1,4 +1,5 @@
 package com.example.exceptions
+import kotlinx.serialization.Serializable
 
 sealed class GameException(message: String) : RuntimeException(message)
 
@@ -11,7 +12,6 @@ class NotYourTurnException :
 class CellAlreadyTakenException :
     GameException("Клітинка вже зайнята")
 
-data class ErrorResponse(val error: String)
 
 class ValidationException(message: String) : IllegalArgumentException(message)
 class NotFoundException(message: String) : Exception(message)
