@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.config.configureDatabase
 import com.example.config.configureExceptionHandling
 import com.example.config.configureKoin
 import com.example.config.configureMonitoring
@@ -17,4 +18,5 @@ fun Application.module() {
     configureMonitoring()
     configureKoin()
     configureRouting()
+    configureDatabase()
 }

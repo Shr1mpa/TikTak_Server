@@ -13,7 +13,7 @@ object GameHistoryTable : Table("game_history") {
     val playerO = text("player_o").nullable()
     val moves = jsonb<Map<String, String?>>("moves", Json.Default)
     val winner = text("winner").nullable()
-    val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
+    val endedAt = datetime("ended_at").defaultExpression(CurrentDateTime)
 
     override val primaryKey = PrimaryKey(id)
 }
