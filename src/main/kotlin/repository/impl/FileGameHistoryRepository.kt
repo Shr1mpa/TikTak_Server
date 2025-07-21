@@ -30,12 +30,12 @@ class FileGameHistoryRepository(
         }
     }
 
-    override fun save(result: GameResult) {
+    override suspend fun save(result: GameResult) {
         cachedResults.add(result)
         saveToFile()
     }
 
-    override fun getAll(): List<GameResult> = cachedResults.toList()
+    override suspend  fun getAll(): List<GameResult> = cachedResults.toList()
 
     private fun saveToFile() {
         runCatching {

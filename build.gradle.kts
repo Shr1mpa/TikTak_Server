@@ -29,6 +29,13 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages")
     implementation("io.insert-koin:koin-ktor:3.5.6")
     implementation("io.insert-koin:koin-logger-slf4j:3.5.6")
+    implementation("org.postgresql:postgresql:42.7.3")
+    implementation("org.jetbrains.exposed:exposed-core:0.50.1")
+    implementation("org.jetbrains.exposed:exposed-dao:0.50.1")
+    implementation("org.jetbrains.exposed:exposed-json:0.50.1")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.50.1")
+    implementation("org.jetbrains.exposed:exposed-kotlin-datetime:0.50.1")
+    implementation("org.jetbrains.exposed:exposed-java-time:0.50.1")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }

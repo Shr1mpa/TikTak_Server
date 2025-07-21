@@ -6,7 +6,7 @@ import com.example.repository.GameHistoryRepository
 class GetGameHistoryUseCase(
     private val repository: GameHistoryRepository
 ) {
-    operator fun invoke(): List<GameResult> {
+    suspend operator fun invoke(): List<GameResult> {
         return repository.getAll()
     }
 }
