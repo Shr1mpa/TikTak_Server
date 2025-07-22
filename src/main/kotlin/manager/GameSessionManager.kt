@@ -3,7 +3,7 @@ package com.example.manager
 import com.example.model.GameSession
 import com.example.model.GameState
 import com.example.utils.initEmptyBoard
-import java.util.UUID
+import java.util.*
 
 class GameSessionManager {
     private val sessions = mutableMapOf<String, GameSession>()

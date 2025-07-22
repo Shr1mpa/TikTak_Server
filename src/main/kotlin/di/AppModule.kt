@@ -9,13 +9,8 @@ import com.example.database.connection.impl.PostgresDatabaseConnectionFactoryImp
 import com.example.database.connection.impl.PostgresExposedConnectionFactoryImpl
 import com.example.manager.GameSessionManager
 import com.example.repository.GameHistoryRepository
-import com.example.repository.impl.FileGameHistoryRepository
 import com.example.repository.impl.PostgresGameHistoryRepository
-import com.example.usecase.GetCurrentTurnUseCase
-import com.example.usecase.GetGameHistoryUseCase
-import com.example.usecase.GetGameStateUseCase
-import com.example.usecase.JoinGameUseCase
-import com.example.usecase.MakeMoveUseCase
+import com.example.usecase.*
 import org.koin.dsl.module
 
 val appModule = module {

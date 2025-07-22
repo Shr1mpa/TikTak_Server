@@ -4,9 +4,7 @@ import com.example.controller.GameController
 import com.example.controller.LobbyController
 import com.example.routes.gameRoutes
 import com.example.routes.lobbyRoutes
-
 import io.ktor.server.application.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.koin.ktor.ext.inject
 

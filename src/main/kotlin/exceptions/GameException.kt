@@ -1,5 +1,4 @@
 package com.example.exceptions
-import kotlinx.serialization.Serializable
 
 sealed class GameException(message: String) : RuntimeException(message)
 

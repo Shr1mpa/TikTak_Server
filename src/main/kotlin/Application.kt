@@ -1,11 +1,6 @@
 package com.example
 
-import com.example.config.configureDatabase
-import com.example.config.configureExceptionHandling
-import com.example.config.configureKoin
-import com.example.config.configureMonitoring
-import com.example.config.configureRouting
-import com.example.config.configureSerialization
+import com.example.config.*
 import io.ktor.server.application.*
 
 fun main(args: Array<String>) {

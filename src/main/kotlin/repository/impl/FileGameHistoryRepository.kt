@@ -2,9 +2,8 @@ package com.example.repository.impl
 
 import com.example.model.response.GameResult
 import com.example.repository.GameHistoryRepository
-import kotlinx.serialization.*
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.Json
 import java.io.File
 
 class FileGameHistoryRepository(

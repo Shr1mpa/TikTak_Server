@@ -1,8 +1,8 @@
 package com.example.usecase
 
 import com.example.manager.GameSessionManager
-import com.example.model.response.JoinResponse
 import com.example.model.request.PlayerJoinRequest
+import com.example.model.response.JoinResponse
 
 class JoinGameUseCase(
     private val sessionManager: GameSessionManager
