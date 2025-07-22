@@ -1,13 +1,13 @@
 package com.example.controller
 
+import com.example.exceptions.ValidationException
 import com.example.model.request.MoveRequest
 import com.example.usecase.GetCurrentTurnUseCase
 import com.example.usecase.GetGameHistoryUseCase
 import com.example.usecase.GetGameStateUseCase
 import com.example.usecase.MakeMoveUseCase
-import io.ktor.server.application.ApplicationCall
-import com.example.exceptions.ValidationException
-import io.ktor.server.response.respond
+import io.ktor.server.application.*
+import io.ktor.server.response.*
 
 class GameController(
     private val makeMoveUseCase: MakeMoveUseCase,
@@ -18,7 +18,6 @@ class GameController(
 
     suspend fun makeMove(call: ApplicationCall) {
         val sessionId = call.requireSessionId()
-
         val request = call.receiveValidated<MoveRequest> {
             if (player != "X" && player != "O") {
                 throw ValidationException("Гравець повинен бути або 'X', або 'O'")

@@ -10,6 +10,8 @@ class GetCurrentTurnUseCase(
         val session = sessionManager.getSession(sessionId)
             ?: throw IllegalArgumentException("Сесію не знайдено")
 
+        sessionManager.ping(session.sessionId)
+
         return CurrentTurnDto(currentTurn = session.state.currentTurn)
     }
 }
