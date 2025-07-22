@@ -66,4 +66,15 @@ class GameSessionManager {
 
         return Result.success(Unit)
     }
+
+    fun ping(sessionId: String) {
+        sessions[sessionId]?.lastPing = System.currentTimeMillis()
+    }
+
+    fun removeInactiveLobbies(ttl: Long) {
+        val now = System.currentTimeMillis()
+        sessions.entries.removeIf { (_, lobby) ->
+            now - lobby.lastPing > ttl
+        }
+    }
 }

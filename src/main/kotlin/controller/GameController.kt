@@ -18,7 +18,6 @@ class GameController(
 
     suspend fun makeMove(call: ApplicationCall) {
         val sessionId = call.requireSessionId()
-
         val request = call.receiveValidated<MoveRequest> {
             if (player != "X" && player != "O") {
                 throw ValidationException("Гравець повинен бути або 'X', або 'O'")

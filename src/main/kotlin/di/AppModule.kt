@@ -12,9 +12,11 @@ import com.example.repository.GameHistoryRepository
 import com.example.repository.impl.PostgresGameHistoryRepository
 import com.example.usecase.*
 import org.koin.dsl.module
+import utils.LobbyCleaner
 
 val appModule = module {
-    single { GameSessionManager() }
+    single<GameSessionManager> { GameSessionManager() }
+    single { LobbyCleaner(get()) }
     single { AppConfigLoader.load() }
     single<GameHistoryRepository> { PostgresGameHistoryRepository() }
 

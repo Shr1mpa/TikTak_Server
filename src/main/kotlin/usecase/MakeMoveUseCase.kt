@@ -19,7 +19,7 @@ class MakeMoveUseCase(
     suspend operator fun invoke(sessionId: String, request: MoveRequest): Result<MoveResult> {
         val session = sessionManager.getSession(sessionId)
             ?: return Result.failure(IllegalStateException("Сесію не знайдено"))
-
+        sessionManager.ping(session.sessionId)
         return session.mutex.withLock {
             val state = session.state
 

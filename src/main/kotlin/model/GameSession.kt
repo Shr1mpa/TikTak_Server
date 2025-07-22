@@ -5,5 +5,6 @@ import kotlinx.coroutines.sync.Mutex
 data class GameSession(
     val sessionId: String,
     var state: GameState,
-    val mutex: Mutex = Mutex()
+    val mutex: Mutex = Mutex(),
+    var lastPing: Long = System.currentTimeMillis()
 )

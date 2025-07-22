@@ -12,5 +12,5 @@ class CellAlreadyTakenException :
     GameException("Клітинка вже зайнята")
 
 
-class ValidationException(message: String) : IllegalArgumentException(message)
-class NotFoundException(message: String) : Exception(message)
+class ValidationException(message: String) : GameException(message)
+class NotFoundException(message: String) : GameException(message)

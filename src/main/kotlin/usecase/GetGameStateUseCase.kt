@@ -11,7 +11,7 @@ class GetGameStateUseCase(
     operator fun invoke(sessionId: String): GameStatusResponse {
         val session = sessionManager.getSession(sessionId)
             ?: throw IllegalArgumentException("Сесію не знайдено")
-
+        sessionManager.ping(session.sessionId)
         val state = session.state
         val winnerResult = state.winnerResult
 

@@ -14,4 +14,5 @@ fun Application.module() {
     configureKoin()
     configureRouting()
     configureDatabase()
+    configureLobbyCleaner()
 }
