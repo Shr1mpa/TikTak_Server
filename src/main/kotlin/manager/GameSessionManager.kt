@@ -1,5 +1,7 @@
 package com.example.manager
 
+import com.example.exceptions.JoinPlayerResult
+import com.example.exceptions.LeavePlayerResult
 import com.example.model.GameSession
 import com.example.model.GameState
 import com.example.utils.initEmptyBoard
@@ -30,31 +32,32 @@ class GameSessionManager {
         )
     }
 
-    fun addPlayerToSession(id: String, name: String): Result<String> {
-        val session = sessions[id] ?: return Result.failure(Exception("Session not found"))
+    fun addPlayerToSession(id: String, name: String): JoinPlayerResult {
+        val session = sessions[id] ?: return JoinPlayerResult.SessionNotFound
         val players = session.state.players.toMutableMap()
 
         if (players.containsValue(name)) {
-            return Result.success(players.entries.first { it.value == name }.key)
+            val existingSymbol = players.entries.first { it.value == name }.key
+            return JoinPlayerResult.Success(existingSymbol)
         }
 
         val availableSymbol = when {
             !players.containsKey("X") -> "X"
             !players.containsKey("O") -> "O"
-            else -> return Result.failure(Exception("Session full"))
+            else -> return JoinPlayerResult.SessionFull
         }
 
         players[availableSymbol] = name
         session.state = session.state.copy(players = players)
-        return Result.success(availableSymbol)
+        return JoinPlayerResult.Success(availableSymbol)
     }
 
     fun getJoinableSessions(): List<GameSession> {
         return sessions.values.filter { it.state.players.size < 2 }
     }
 
-    fun removePlayerFromSession(sessionId: String, playerName: String): Result<Unit> {
-        val session = sessions[sessionId] ?: return Result.failure(Exception("Сесію не знайдено"))
+    fun removePlayerFromSession(sessionId: String, playerName: String): LeavePlayerResult {
+        val session = sessions[sessionId] ?: return LeavePlayerResult.SessionNotFound
 
         val updatedPlayers = session.state.players.filterValues { it != playerName }
 
@@ -64,7 +67,7 @@ class GameSessionManager {
             session.state = session.state.copy(players = updatedPlayers)
         }
 
-        return Result.success(Unit)
+        return LeavePlayerResult.Success
     }
 
     fun ping(sessionId: String) {

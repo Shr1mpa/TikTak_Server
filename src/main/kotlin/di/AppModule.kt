@@ -12,11 +12,16 @@ import com.example.repository.GameHistoryRepository
 import com.example.repository.impl.PostgresGameHistoryRepository
 import com.example.usecase.*
 import org.koin.dsl.module
+import usecase.LeaveLobbyUseCase
 import utils.LobbyCleaner
 
 val appModule = module {
     single<GameSessionManager> { GameSessionManager() }
     single { LobbyCleaner(get()) }
+    single { CreateLobbyUseCase(get()) }
+    single { ListAvailableLobbiesUseCase(get()) }
+    single { GetLobbyPlayersUseCase(get()) }
+    single { LeaveLobbyUseCase(get()) }
     single { AppConfigLoader.load() }
     single<GameHistoryRepository> { PostgresGameHistoryRepository() }
 
@@ -28,6 +33,6 @@ val appModule = module {
     factory { GetGameHistoryUseCase(get()) }
     factory { MakeMoveUseCase(get(), get()) }
     factory { JoinGameUseCase(get()) }
-    factory { LobbyController(get(), get()) }
+    factory { LobbyController(get(), get(), get(), get(), get()) }
     factory { GameController(get(), get(), get(), get()) }
 }
