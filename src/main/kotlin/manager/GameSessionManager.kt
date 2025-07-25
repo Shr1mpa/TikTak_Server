@@ -4,6 +4,7 @@ import com.example.exceptions.JoinPlayerResult
 import com.example.exceptions.LeavePlayerResult
 import com.example.model.GameSession
 import com.example.model.GameState
+import com.example.model.WinnerResult
 import com.example.utils.initEmptyBoard
 import java.util.*
 
@@ -52,8 +53,13 @@ class GameSessionManager {
         return JoinPlayerResult.Success(availableSymbol)
     }
 
+    fun isJoinable(session: GameSession): Boolean {
+        val state = session.state
+        return state.players.size < 2 && state.winnerResult == WinnerResult.NONE
+    }
+
     fun getJoinableSessions(): List<GameSession> {
-        return sessions.values.filter { it.state.players.size < 2 }
+        return sessions.values.filter(::isJoinable)
     }
 
     fun removePlayerFromSession(sessionId: String, playerName: String): LeavePlayerResult {
