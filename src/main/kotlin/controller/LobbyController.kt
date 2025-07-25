@@ -44,7 +44,9 @@ class LobbyController(
     suspend fun getLobbyPlayers(call: ApplicationCall) {
         val sessionId = call.unwrapOrRespond(call.requireSessionId()) ?: return
         val result = getLobbyPlayersUseCase(sessionId)
-        call.unwrapOrRespond(result)
+        call.unwrapOrRespond(result)?.let {
+            call.respond(it)
+        }
     }
 
     suspend fun joinLobby(call: ApplicationCall) {
@@ -73,6 +75,8 @@ class LobbyController(
         }) ?: return
 
         val result = leaveLobbyUseCase(sessionId, request.name)
-        call.unwrapOrRespond(result)
+        call.unwrapOrRespond(result)?.let {
+            call.respond(it)
+        }
     }
 }

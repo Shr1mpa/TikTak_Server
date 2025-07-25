@@ -43,13 +43,17 @@ class GameController(
         }) ?: return
 
         val result = makeMoveUseCase(sessionId, request)
-        call.unwrapOrRespond(result)
+        call.unwrapOrRespond(result)?.let {
+            call.respond(it)
+        }
     }
 
     suspend fun getGameState(call: ApplicationCall) {
         val sessionId = call.unwrapOrRespond(call.requireSessionId()) ?: return
         val result = getGameStateUseCase(sessionId)
-        call.unwrapOrRespond(result)
+        call.unwrapOrRespond(result)?.let {
+            call.respond(it)
+        }
     }
 
     suspend fun getCurrentTurn(call: ApplicationCall) {
