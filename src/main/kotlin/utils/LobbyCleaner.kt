@@ -11,7 +11,7 @@ class LobbyCleaner(
     private val sessionManager: GameSessionManager
 ) {
     private val scope = CoroutineScope(Dispatchers.Default)
-    private val ttl = 60_000L // 60 секунд
+    private val ttl = 60_000L
 
     fun start() {
         scope.launch {

@@ -1,5 +1,7 @@
 package com.example.usecase
 
+import com.example.exceptions.GameErrorType
+import com.example.exceptions.ValidationResult
 import com.example.manager.GameSessionManager
 import com.example.model.WinnerResult
 import com.example.model.request.MoveRequest
@@ -16,14 +18,20 @@ class MakeMoveUseCase(
     private val sessionManager: GameSessionManager,
     private val historyRepository: GameHistoryRepository
 ) {
-    suspend operator fun invoke(sessionId: String, request: MoveRequest): Result<MoveResult> {
+    suspend operator fun invoke(sessionId: String, request: MoveRequest): ValidationResult<MoveResult> {
         val session = sessionManager.getSession(sessionId)
-            ?: return Result.failure(IllegalStateException("Сесію не знайдено"))
+            ?: return ValidationResult.Error(
+                GameErrorType.SESSION_NOT_FOUND,
+                details = mapOf("sessionId" to sessionId)
+            )
+
         sessionManager.ping(session.sessionId)
+
         return session.mutex.withLock {
             val state = session.state
 
-            GameRulesValidator.validateMove(state, request)
+            val validationResult = GameRulesValidator.validateMove(state, request)
+            if (validationResult is ValidationResult.Error) return@withLock validationResult
 
             val updatedBoard = state.board.toMutableMap()
             updatedBoard[request.cell] = request.player
@@ -57,7 +65,7 @@ class MakeMoveUseCase(
                 WinnerResult.NONE -> "Хід прийнято"
             }
 
-            Result.success(
+            ValidationResult.Success(
                 MoveResult(
                     board = updatedBoard,
                     currentTurn = if (winnerResult == WinnerResult.NONE) session.state.currentTurn else null,

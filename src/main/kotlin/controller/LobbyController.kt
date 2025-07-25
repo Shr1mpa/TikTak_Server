@@ -1,76 +1,82 @@
 package com.example.controller
 
-import com.example.exceptions.ValidationException
-import com.example.exceptions.NotFoundException
-import com.example.manager.GameSessionManager
+import com.example.exceptions.GameErrorType
+import com.example.exceptions.ValidationResult
 import com.example.model.request.PlayerJoinRequest
 import com.example.model.request.PlayerLeaveRequest
-import com.example.model.response.CreateSessionResponse
-import com.example.model.response.SessionLobbyDto
+import com.example.usecase.CreateLobbyUseCase
+import com.example.usecase.GetLobbyPlayersUseCase
 import com.example.usecase.JoinGameUseCase
+import com.example.usecase.ListAvailableLobbiesUseCase
+import com.example.utils.receiveValidatedOrError
+import com.example.utils.unwrapOrRespond
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
+import usecase.LeaveLobbyUseCase
 import kotlin.random.Random
 
 class LobbyController(
-    private val sessionManager: GameSessionManager,
-    private val joinGameUseCase: JoinGameUseCase
+    private val createLobbyUseCase: CreateLobbyUseCase,
+    private val joinGameUseCase: JoinGameUseCase,
+    private val listAvailableLobbiesUseCase: ListAvailableLobbiesUseCase,
+    private val getLobbyPlayersUseCase: GetLobbyPlayersUseCase,
+    private val leaveLobbyUseCase: LeaveLobbyUseCase,
 ) : BaseGameController() {
 
     suspend fun createLobby(call: ApplicationCall) {
-        val request = call.receiveValidated<PlayerJoinRequest> {
-            if (name.isBlank()) throw ValidationException("Імʼя не може бути порожнім")
-        }
+        val request = call.unwrapOrRespond(call.receiveValidatedOrError<PlayerJoinRequest> {
+            if (name.isBlank()) {
+                return@receiveValidatedOrError ValidationResult.Error(GameErrorType.EMPTY_NAME)
+            }
+            ValidationResult.Success(Unit)
+        }) ?: return
 
-        val assignedSymbol = if (Random.nextBoolean()) "X" else "O"
-        val session = sessionManager.createSession(request.name, assignedSymbol)
-
-        call.respond(
-            CreateSessionResponse(
-                sessionId = session.sessionId,
-                symbol = assignedSymbol,
-                message = "Сесія створена, ваш символ: $assignedSymbol"
-            )
-        )
+        val response = createLobbyUseCase(request.name)
+        call.respond(response)
     }
 
     suspend fun listAvailableLobbies(call: ApplicationCall) {
-        val availableSessions = sessionManager.getJoinableSessions()
-        val response = availableSessions.map {
-            SessionLobbyDto(
-                sessionId = it.sessionId,
-                players = it.state.players
-            )
-        }
+        val response = listAvailableLobbiesUseCase()
         call.respond(response)
     }
 
     suspend fun getLobbyPlayers(call: ApplicationCall) {
-        val sessionId = call.requireSessionId()
-        val session = sessionManager.getSession(sessionId)
-            ?: throw NotFoundException("Сесію не знайдено")
-
-        call.respond(session.state.players)
+        val sessionId = call.unwrapOrRespond(call.requireSessionId()) ?: return
+        val result = getLobbyPlayersUseCase(sessionId)
+        call.unwrapOrRespond(result)?.let {
+            call.respond(it)
+        }
     }
 
     suspend fun joinLobby(call: ApplicationCall) {
-        val sessionId = call.requireSessionId()
-        val request = call.receiveValidated<PlayerJoinRequest> {
-            if (name.isBlank()) throw ValidationException("Імʼя не може бути порожнім")
-        }
+        val sessionId = call.unwrapOrRespond(call.requireSessionId()) ?: return
 
-        val result = joinGameUseCase(sessionId, request)
-        call.respond(result.getOrThrow())
+        val request = call.unwrapOrRespond(call.receiveValidatedOrError<PlayerJoinRequest> {
+            if (name.isBlank()) {
+                return@receiveValidatedOrError ValidationResult.Error(GameErrorType.EMPTY_NAME)
+            }
+            ValidationResult.Success(Unit)
+        }) ?: return
+
+        call.unwrapOrRespond(joinGameUseCase(sessionId, request))?.let {
+            call.respond(it)
+        }
     }
 
     suspend fun leaveLobby(call: ApplicationCall) {
-        val sessionId = call.requireSessionId()
-        val request = call.receive<PlayerLeaveRequest>()
+        val sessionId = call.unwrapOrRespond(call.requireSessionId()) ?: return
 
-        sessionManager.removePlayerFromSession(sessionId, request.name)
-            .onFailure { throw it }
+        val request = call.unwrapOrRespond(call.receiveValidatedOrError<PlayerLeaveRequest> {
+            if (name.isBlank()) {
+                return@receiveValidatedOrError ValidationResult.Error(GameErrorType.EMPTY_NAME)
+            }
+            ValidationResult.Success(Unit)
+        }) ?: return
 
-        call.respond(mapOf("message" to "Гравець ${request.name} покинув лоббі"))
+        val result = leaveLobbyUseCase(sessionId, request.name)
+        call.unwrapOrRespond(result)?.let {
+            call.respond(it)
+        }
     }
 }

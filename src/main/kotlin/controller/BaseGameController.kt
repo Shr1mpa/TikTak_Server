@@ -1,6 +1,7 @@
 package com.example.controller
 
-import com.example.exceptions.ValidationException
+import com.example.exceptions.GameErrorType
+import com.example.exceptions.ValidationResult
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 
@@ -13,8 +14,13 @@ abstract class BaseGameController {
         return request
     }
 
-    protected suspend fun ApplicationCall.requireSessionId(): String {
-        return parameters["sessionId"] ?: throw ValidationException("Потрібен ID сесії")
-    }
+    protected suspend fun ApplicationCall.requireSessionId(): ValidationResult<String> {
+        val id = parameters["sessionId"]
+            ?: return ValidationResult.Error(
+                type = GameErrorType.MISSING_SESSION_ID,
+                details = mapOf("param" to "sessionId")
+            )
 
+        return ValidationResult.Success(id)
+    }
 }

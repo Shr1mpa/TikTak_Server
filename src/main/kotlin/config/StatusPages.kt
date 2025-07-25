@@ -1,25 +1,20 @@
 package com.example.config
 
-import com.example.exceptions.GameException
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
+import org.slf4j.LoggerFactory
 
 fun Application.configureExceptionHandling() {
-    install(StatusPages) {
-        exception<GameException> { call, cause ->
-            call.respond(
-                status = HttpStatusCode.BadRequest,
-                message = mapOf("error" to cause.message)
-            )
-        }
+    val logger = LoggerFactory.getLogger("ExceptionHandler")
 
+    install(StatusPages) {
         exception<Throwable> { call, cause ->
-            cause.printStackTrace()
+            logger.error("Unhandled error", cause)
             call.respond(
-                status = HttpStatusCode.InternalServerError,
-                message = mapOf("error" to "Внутрішня помилка сервера")
+                HttpStatusCode.InternalServerError,
+                mapOf("error" to "Internal Server Error")
             )
         }
     }
